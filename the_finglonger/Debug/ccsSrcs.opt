@@ -1,0 +1,1 @@
+"../accelerometer.c" "../led_task.c" "../linear_controller_task.c" "../startup_ccs.c" "../switch_task.c" "../the_finglonger.c" 
