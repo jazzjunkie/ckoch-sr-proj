@@ -180,9 +180,9 @@ LEDTask(void *pvParameters)
         //if( i == 0 )
         	RGBEnable();
 
-        //ulLEDToggleDelay = abs( global_x_accel ) / 100 + 100;
+        ulLEDToggleDelay = abs( global_x_accel ) / 100 + 100;
         //ulLEDToggleDelay = 50;
-/*
+
         	if(global_x_accel < 0)
         	{
         		g_ulColors[0] = 0x8000; //abs( global_x_accel ) << 2;
@@ -196,7 +196,7 @@ LEDTask(void *pvParameters)
 				g_ulColors[2] = 0;
         	}
         	RGBColorSet(g_ulColors);
-        	*/
+
         //
         // Wait for the required amount of time.
         //

@@ -382,6 +382,9 @@ unsigned long WaitI2CDone( unsigned long ulBase)
 }
 
 
+unsigned int id;
+unsigned int err;
+unsigned int regadd;
 
 static void
 UltrasonicTask(void *pvParameters)
@@ -398,12 +401,21 @@ UltrasonicTask(void *pvParameters)
 	//I2CMasterIntEnable		(I2C3_MASTER_BASE);
 	//I2CIntRegister			(I2C3_MASTER_BASE, EchoInterrupt);
 
-	//I2CMasterEnable			(I2C3_MASTER_BASE);
-
-
 #if RANGING_MODE == LASER_SPI
 
+	I2CMasterEnable			(I2C3_MASTER_BASE);
 
+/*
+	I2CMasterSlaveAddrSet( I2C3_MASTER_BASE, (0xC4 / 2), false);   // false = write, true = read
+	I2CMasterDataPut( I2C3_MASTER_BASE, 0x4A);
+	I2CMasterControl( I2C3_MASTER_BASE, I2C_MASTER_CMD_BURST_SEND_START);
+	vTaskDelay(1);
+	WaitI2CDone(I2C3_MASTER_BASE);
+	I2CMasterDataPut( I2C3_MASTER_BASE, 0x10);
+	I2CMasterControl( I2C3_MASTER_BASE, I2C_MASTER_CMD_BURST_SEND_FINISH);
+	vTaskDelay(1);
+	WaitI2CDone(I2C3_MASTER_BASE);
+*/
 #elif RANGING_MODE == ULTRASONIC_SPI
 
 #elif RANGING_MODE == LASER_PWM
@@ -435,7 +447,65 @@ UltrasonicTask(void *pvParameters)
 	while(1)
 	{
 	#if RANGING_MODE == LASER_SPI
-		I2CMasterSlaveAddrSet( I2C3_MASTER_BASE, 112, false);   // false = write, true = read
+
+
+		I2CMasterSlaveAddrSet( I2C3_MASTER_BASE, (0xC4 / 2), false);   // false = write, true = read
+		I2CMasterDataPut( I2C3_MASTER_BASE, 0x00);
+		I2CMasterControl( I2C3_MASTER_BASE, I2C_MASTER_CMD_BURST_SEND_START);
+		vTaskDelay(1);
+		err = WaitI2CDone(I2C3_MASTER_BASE);
+		I2CMasterDataPut( I2C3_MASTER_BASE, 0x04);
+		I2CMasterControl( I2C3_MASTER_BASE, I2C_MASTER_CMD_BURST_SEND_FINISH);
+		vTaskDelay(1);
+		err |= WaitI2CDone(I2C3_MASTER_BASE);
+
+		vTaskDelay(400);
+
+		I2CMasterSlaveAddrSet( I2C3_MASTER_BASE, (0xC4 / 2), false);   // false = write, true = read
+		I2CMasterDataPut( I2C3_MASTER_BASE, 0x8F );
+		I2CMasterControl( I2C3_MASTER_BASE, I2C_MASTER_CMD_SINGLE_SEND);
+		vTaskDelay(1);
+		err |= WaitI2CDone(I2C3_MASTER_BASE);
+
+		I2CMasterSlaveAddrSet( I2C3_MASTER_BASE, (0xC4 / 2), true);   // false = write, true = read
+		I2CMasterControl( I2C3_MASTER_BASE, I2C_MASTER_CMD_BURST_RECEIVE_START);
+		vTaskDelay(1);
+		err |= WaitI2CDone(I2C3_MASTER_BASE);
+		id = I2CMasterDataGet(I2C3_MASTER_BASE) << 8;
+		I2CMasterControl( I2C3_MASTER_BASE, I2C_MASTER_CMD_BURST_RECEIVE_FINISH);
+		vTaskDelay(1);
+		err |= WaitI2CDone(I2C3_MASTER_BASE);
+		id |= I2CMasterDataGet(I2C3_MASTER_BASE);
+
+		/*
+		I2CMasterSlaveAddrSet( I2C3_MASTER_BASE, (0xC4 / 2), false);   // false = write, true = read
+		I2CMasterDataPut( I2C3_MASTER_BASE, 0x0F );
+		I2CMasterControl( I2C3_MASTER_BASE, I2C_MASTER_CMD_SINGLE_SEND);
+		vTaskDelay(1);
+		while( I2CMasterBusy(I2C3_MASTER_BASE));
+
+		I2CMasterSlaveAddrSet( I2C3_MASTER_BASE, (0xC4 / 2), true);   // false = write, true = read
+		I2CMasterControl( I2C3_MASTER_BASE, I2C_MASTER_CMD_SINGLE_RECEIVE);
+		vTaskDelay(1);
+		while( I2CMasterBusy(I2C3_MASTER_BASE));
+		id = I2CMasterDataGet(I2C3_MASTER_BASE) << 8;
+
+		I2CMasterSlaveAddrSet( I2C3_MASTER_BASE, (0xC4 / 2), false);   // false = write, true = read
+		I2CMasterDataPut( I2C3_MASTER_BASE, 0x10 );
+		I2CMasterControl( I2C3_MASTER_BASE, I2C_MASTER_CMD_SINGLE_SEND);
+		vTaskDelay(1);
+		while( I2CMasterBusy(I2C3_MASTER_BASE));
+
+		I2CMasterSlaveAddrSet( I2C3_MASTER_BASE, (0xC4 / 2), true);   // false = write, true = read
+		I2CMasterControl( I2C3_MASTER_BASE, I2C_MASTER_CMD_SINGLE_RECEIVE);
+		vTaskDelay(1);
+		while( I2CMasterBusy(I2C3_MASTER_BASE));
+		id |= I2CMasterDataGet(I2C3_MASTER_BASE);
+*/
+
+		UARTprintf("\x1b[2J\x1b[1;1H%d\r", id );
+
+		vTaskDelayUntil(&ulWakeTime, 100);
 
 	#elif RANGING_MODE == ULTRASONIC_SPI
 		 /** Send register address. */
@@ -513,6 +583,7 @@ UltrasonicTask(void *pvParameters)
 	#else
 
 	#endif
+		vTaskDelayUntil(&ulWakeTime, /*SONIC_TASK_DELAY*/ 100  );
 	}
 }
 

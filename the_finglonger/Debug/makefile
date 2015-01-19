@@ -156,7 +156,8 @@ clean:
 	-@echo ' '
 
 post-build:
-	-"C:/ti/ccsv5/utils/tiobj2bin/tiobj2bin" "the_finglonger.out" "the_finglonger.bin" "C:/ti/ccsv5/tools/compiler/tms470_4.9.5/bin/ofd470" "C:/ti/ccsv5/tools/compiler/tms470_4.9.5/bin/hex470" "C:/ti/ccsv5/utils/tiobj2bin/mkhex4bin"
+	-@echo 'Create flash image: Intel-HEX'
+	-"C:/ti/ccsv5/tools/compiler/tms470_4.9.5/bin/hex470" -i "the_finglonger.out" -o "the_finglonger.hex" -order MS -romwidth 16
 	-@echo ' '
 
 .PHONY: all clean dependents
