@@ -23,6 +23,7 @@ the_finglonger.obj: C:/ti/StellarisWare/third_party/FreeRTOS/Source/include/list
 the_finglonger.obj: C:/ti/StellarisWare/third_party/FreeRTOS/Source/include/queue.h
 the_finglonger.obj: C:/ti/StellarisWare/third_party/FreeRTOS/Source/include/semphr.h
 the_finglonger.obj: ../linear_controller_task.h
+the_finglonger.obj: ../stepper_control.h
 the_finglonger.obj: C:/ti/StellarisWare/boards/ek-lm4f120xl/drivers/rgb.h
 the_finglonger.obj: C:/ti/StellarisWare/inc/hw_timer.h
 the_finglonger.obj: ../priorities.h
@@ -54,6 +55,7 @@ C:/ti/StellarisWare/third_party/FreeRTOS/Source/include/list.h:
 C:/ti/StellarisWare/third_party/FreeRTOS/Source/include/queue.h: 
 C:/ti/StellarisWare/third_party/FreeRTOS/Source/include/semphr.h: 
 ../linear_controller_task.h: 
+../stepper_control.h: 
 C:/ti/StellarisWare/boards/ek-lm4f120xl/drivers/rgb.h: 
 C:/ti/StellarisWare/inc/hw_timer.h: 
 ../priorities.h: 

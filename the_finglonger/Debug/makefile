@@ -20,7 +20,9 @@ $(GEN_CMDS__FLAG) \
 "./utils/uartstdio.obj" \
 "./the_finglonger.obj" \
 "./switch_task.obj" \
+"./stepper_control.obj" \
 "./startup_ccs.obj" \
+"./range_finder.obj" \
 "./linear_controller_task.obj" \
 "./led_task.obj" \
 "./accelerometer.obj" \
@@ -149,8 +151,8 @@ the_finglonger.out: $(OBJS) $(CMD_SRCS) $(GEN_CMDS)
 # Other Targets
 clean:
 	-$(RM) $(TMS470_EXECUTABLE_OUTPUTS__QUOTED) "the_finglonger.out"
-	-$(RM) "accelerometer.pp" "led_task.pp" "linear_controller_task.pp" "startup_ccs.pp" "switch_task.pp" "the_finglonger.pp" "utils\uartstdio.pp" "utils\ustdlib.pp" "third_party\FreeRTOS\Source\list.pp" "third_party\FreeRTOS\Source\queue.pp" "third_party\FreeRTOS\Source\tasks.pp" "third_party\FreeRTOS\Source\portable\MemMang\heap_2.pp" "third_party\FreeRTOS\Source\portable\CCS\ARM_CM4F\port.pp" "drivers\buttons.pp" "drivers\rgb.pp" 
-	-$(RM) "accelerometer.obj" "led_task.obj" "linear_controller_task.obj" "startup_ccs.obj" "switch_task.obj" "the_finglonger.obj" "utils\uartstdio.obj" "utils\ustdlib.obj" "third_party\FreeRTOS\Source\list.obj" "third_party\FreeRTOS\Source\queue.obj" "third_party\FreeRTOS\Source\tasks.obj" "third_party\FreeRTOS\Source\portable\MemMang\heap_2.obj" "third_party\FreeRTOS\Source\portable\CCS\ARM_CM4F\port.obj" "third_party\FreeRTOS\Source\portable\CCS\ARM_CM4F\portasm.obj" "drivers\buttons.obj" "drivers\rgb.obj" 
+	-$(RM) "accelerometer.pp" "led_task.pp" "linear_controller_task.pp" "range_finder.pp" "startup_ccs.pp" "stepper_control.pp" "switch_task.pp" "the_finglonger.pp" "utils\uartstdio.pp" "utils\ustdlib.pp" "third_party\FreeRTOS\Source\list.pp" "third_party\FreeRTOS\Source\queue.pp" "third_party\FreeRTOS\Source\tasks.pp" "third_party\FreeRTOS\Source\portable\MemMang\heap_2.pp" "third_party\FreeRTOS\Source\portable\CCS\ARM_CM4F\port.pp" "drivers\buttons.pp" "drivers\rgb.pp" 
+	-$(RM) "accelerometer.obj" "led_task.obj" "linear_controller_task.obj" "range_finder.obj" "startup_ccs.obj" "stepper_control.obj" "switch_task.obj" "the_finglonger.obj" "utils\uartstdio.obj" "utils\ustdlib.obj" "third_party\FreeRTOS\Source\list.obj" "third_party\FreeRTOS\Source\queue.obj" "third_party\FreeRTOS\Source\tasks.obj" "third_party\FreeRTOS\Source\portable\MemMang\heap_2.obj" "third_party\FreeRTOS\Source\portable\CCS\ARM_CM4F\port.obj" "third_party\FreeRTOS\Source\portable\CCS\ARM_CM4F\portasm.obj" "drivers\buttons.obj" "drivers\rgb.obj" 
 	-$(RM) "third_party\FreeRTOS\Source\portable\CCS\ARM_CM4F\portasm.pp" 
 	-@echo 'Finished clean'
 	-@echo ' '
