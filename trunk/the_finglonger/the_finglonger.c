@@ -37,6 +37,7 @@
 #include "queue.h"
 #include "semphr.h"
 #include "linear_controller_task.h"
+#include "stepper_control.h"
 
 #include "drivers/rgb.h"
 #include "inc/hw_timer.h"
@@ -158,11 +159,17 @@ main(void)
         while(1);
 #endif
 
+#if 0
 	if(LinearControllerTaskInit() != 0)
+#else
+	if(StepperControllerTaskInit() != 0)
+#endif
 		while(1);
+
 
 	if(AccelTaskInit() != 0)
 		while(1);
+
 
 #if 1
 	if(xTaskCreate(ConsoleTask, (signed portCHAR *)"Console", 256, NULL, tskIDLE_PRIORITY + PRIORITY_CONSOLE_TASK, NULL) != pdTRUE)
@@ -212,9 +219,10 @@ void HW_Init(void)
 
 	// Initialize the UART and configure it for 115,200, 8-N-1 operation.
 	ROM_SysCtlPeripheralEnable(SYSCTL_PERIPH_UART0);
-	ROM_SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOA);
 
+	SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOA);
 	SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOB);
+	SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOC);
 	SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOD);
 	SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOE);
 
@@ -282,5 +290,13 @@ void HW_Init(void)
 	GPIOPinTypeI2C			(GPIO_PORTB_BASE, GPIO_PIN_3);
 	GPIOPinTypeI2CSCL		(GPIO_PORTB_BASE, GPIO_PIN_2);
 	I2CMasterInitExpClk		(I2C0_MASTER_BASE, SysCtlClockGet(), true);
-	GPIOPinTypeGPIOInput	(GPIO_PORTE_BASE, GPIO_PIN_2);	//interrupt pin
+	GPIOPinTypeGPIOInput	(GPIO_PORTC_BASE, GPIO_PIN_7);	//interrupt pin (formerly PE2)
+
+
+
+	//stepper driver pin configuration
+
+	GPIOPinTypeGPIOOutput(GPIO_PORTC_BASE, GPIO_PIN_4); //PC4 = stepper DIR
+	GPIOPinTypeGPIOOutput(GPIO_PORTC_BASE, GPIO_PIN_5); //PC5 = stepper STEP
+	GPIOPinTypeGPIOOutput(GPIO_PORTC_BASE, GPIO_PIN_6); //PC6 = stepper ENABLE_N
 }
