@@ -16,13 +16,6 @@
 extern unsigned long LinearControllerTaskInit(void);
 
 
-#define LASER_SPI		1
-#define ULTRASONIC_SPI	2
-#define LASER_PWM		3
-#define ULTRASONIC_PWM	4
-
-#define RANGING_MODE	LASER_SPI
-
 
 typedef enum
 {

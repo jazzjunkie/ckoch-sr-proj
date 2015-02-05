@@ -14,8 +14,6 @@
 #include "driverlib/uart.h"
 #include "utils/uartstdio.h"
 
-//extern unsigned long WaitI2CDone( unsigned long ulBase);
-
 unsigned long temp_data = 0;
 
 unsigned char ReadRegByte(unsigned char addr)
@@ -23,18 +21,15 @@ unsigned char ReadRegByte(unsigned char addr)
 	I2CMasterSlaveAddrSet( I2C0_MASTER_BASE, MPU6050_DEFAULT_ADDRESS, false);   // false = write, true = read
 	I2CMasterDataPut( I2C0_MASTER_BASE, addr );
 	I2CMasterControl( I2C0_MASTER_BASE, I2C_MASTER_CMD_SINGLE_SEND);
-
-
-	//vTaskDelay( 1 );
-	//WaitI2CDone( I2C0_MASTER_BASE);
-	while( I2CMasterBusy(I2C0_MASTER_BASE));
+	while( I2CMasterBusy(I2C0_MASTER_BASE))
+		vTaskDelay( 1 );
 
 	/** Set read mode.  */
 	I2CMasterSlaveAddrSet( I2C0_MASTER_BASE, MPU6050_DEFAULT_ADDRESS, true);   // false = write, true = read
 	I2CMasterControl( I2C0_MASTER_BASE, I2C_MASTER_CMD_SINGLE_RECEIVE);
-	//vTaskDelay( 1 );
-	//WaitI2CDone( I2C0_MASTER_BASE);
-	while( I2CMasterBusy(I2C0_MASTER_BASE));
+
+	while( I2CMasterBusy(I2C0_MASTER_BASE))
+		vTaskDelay( 1 );
 
 	return I2CMasterDataGet(I2C0_MASTER_BASE);
 }
@@ -45,10 +40,8 @@ void WriteRegByte(unsigned char addr, unsigned char value)
 	I2CMasterDataPut( I2C0_MASTER_BASE, addr );
 	I2CMasterControl( I2C0_MASTER_BASE, I2C_MASTER_CMD_BURST_SEND_START);
 
-
-	//vTaskDelay( 1 );
-	//WaitI2CDone( I2C0_MASTER_BASE);
-	while( I2CMasterBusy(I2C0_MASTER_BASE));
+	while( I2CMasterBusy(I2C0_MASTER_BASE))
+		vTaskDelay( 1 );
 
 	I2CMasterDataPut( I2C0_MASTER_BASE, value );
 	I2CMasterControl( I2C0_MASTER_BASE, I2C_MASTER_CMD_BURST_SEND_FINISH);
@@ -58,7 +51,8 @@ void WriteRegByte(unsigned char addr, unsigned char value)
 	//I2CMasterControl( I2C0_MASTER_BASE, I2C_MASTER_CMD_SINGLE_RECEIVE);
 	//vTaskDelay( 1 );
 	//WaitI2CDone( I2C0_MASTER_BASE);
-	while( I2CMasterBusy(I2C0_MASTER_BASE));
+	while( I2CMasterBusy(I2C0_MASTER_BASE))
+		vTaskDelay( 1 );
 
 	//return I2CMasterDataGet(I2C0_MASTER_BASE);
 }
@@ -70,20 +64,23 @@ short ReadRegShort(unsigned char addr)
 	I2CMasterSlaveAddrSet( I2C0_MASTER_BASE, MPU6050_DEFAULT_ADDRESS, false);   // false = write, true = read
 	I2CMasterDataPut( I2C0_MASTER_BASE, addr );
 	I2CMasterControl( I2C0_MASTER_BASE, I2C_MASTER_CMD_SINGLE_SEND);
-	vTaskDelay(1);
-	while( I2CMasterBusy(I2C0_MASTER_BASE));
+
+	while( I2CMasterBusy(I2C0_MASTER_BASE))
+		vTaskDelay(1);
 
 	I2CMasterSlaveAddrSet( I2C0_MASTER_BASE, MPU6050_DEFAULT_ADDRESS, true);   // false = write, true = read
 	I2CMasterControl( I2C0_MASTER_BASE, I2C_MASTER_CMD_BURST_RECEIVE_START);
-	vTaskDelay(1);
-	while( I2CMasterBusy(I2C0_MASTER_BASE));
-	data = I2CMasterDataGet(I2C0_MASTER_BASE);
 
-	data <<= 8;
+	while( I2CMasterBusy(I2C0_MASTER_BASE))
+		vTaskDelay(1);
+
+	data = (short)(I2CMasterDataGet(I2C0_MASTER_BASE)) << 8;
 
 	I2CMasterControl( I2C0_MASTER_BASE, I2C_MASTER_CMD_BURST_RECEIVE_FINISH);
-	vTaskDelay(1);
-	while( I2CMasterBusy(I2C0_MASTER_BASE));
+
+	while( I2CMasterBusy(I2C0_MASTER_BASE))
+		vTaskDelay(1);
+
 	data |= I2CMasterDataGet(I2C0_MASTER_BASE);
 
 	return data;
@@ -105,7 +102,7 @@ short ReadRegShort(unsigned char addr)
 
 long global_x_accel;
 
-extern long range_bound;
+long range_bound;
 
 static void AccelTask(void *pvParameters)
 {
