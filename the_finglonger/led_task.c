@@ -73,7 +73,7 @@ static unsigned char g_ucColorsIndx;
 
 extern xSemaphoreHandle g_pUARTSemaphore;
 extern long global_x_accel;
-extern unsigned char laser_or_ultrasonic;
+//extern unsigned char laser_or_ultrasonic;
 
 //*****************************************************************************
 //
@@ -129,7 +129,7 @@ LEDTask(void *pvParameters)
                 }
 
 
-                laser_or_ultrasonic = g_ucColorsIndx;
+                //laser_or_ultrasonic = g_ucColorsIndx;
 
 
 

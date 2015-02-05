@@ -28,12 +28,9 @@
 
 #include "drivers/rgb.h"
 
-#define MOTORTASKSTACKSIZE        256         // Stack size in words
+#include "defines.h"
 
-#define MOTOR_PWM_PERIOD 2048
-#define MOTOR_TASK_DELAY (configTICK_RATE_HZ / 200)
-
-
+#if (MOTOR_TYPE	== DC_SLIDE)
 
 
 static unsigned short	pwm_power[2]	= { (MOTOR_PWM_PERIOD-1), (MOTOR_PWM_PERIOD-1) };
@@ -69,9 +66,6 @@ static void
 LinearControllerTask(void *pvParameters)
 {
 	portTickType ulWakeTime;
-
-
-
 
 	short error;
 
@@ -115,37 +109,7 @@ LinearControllerTask(void *pvParameters)
 		ADCIntClear(ADC0_BASE, 3);										// Clear the ADC interrupt flag.
 		ADCSequenceDataGet(ADC0_BASE, 3, (unsigned long *)(slider_pos + slide_index));	// Read ADC Value.
 
-		//target = dummy_target;
 
-/*
-		if((dummy_target != 20) || (error < 100) )
-			dummy_target += dummy_increment;
-
-		if(dummy_target > 4050)
-		{
-			dummy_target = 20;
-			dummy_increment += 2;
-			if(dummy_increment > 50)
-				dummy_increment = 10;
-		}
-		*/
-		/*
-		if(dummy_i++ > 200)
-		{
-			dummy_i = 0;
-
-			if(dummy_increment)
-			{
-				dummy_target = 3100;
-				dummy_increment = 0;
-			}
-			else
-			{
-				dummy_target = 900;
-				dummy_increment = 1;
-			}
-		}
-*/
 		error = target - (int)(slider_pos[slide_index & 0x03]);
 
 #if 1
@@ -404,3 +368,4 @@ void InitSlideADC( void )
 	ADCIntClear(ADC0_BASE, 3);
 }
 
+#endif

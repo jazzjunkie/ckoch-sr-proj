@@ -47,6 +47,7 @@
 
 extern xQueueHandle g_pLEDQueue;
 extern xSemaphoreHandle g_pUARTSemaphore;
+extern int test_pos;
 
 //*****************************************************************************
 //
@@ -94,7 +95,7 @@ SwitchTask(void *pvParameters)
                 if((ucCurButtonState & ALL_BUTTONS) == LEFT_BUTTON)
                 {
                     ucMessage = LEFT_BUTTON;
-
+                    test_pos += 50;
                     //
                     // Guard UART from concurrent access.
                     //
@@ -105,7 +106,7 @@ SwitchTask(void *pvParameters)
                 else if((ucCurButtonState & ALL_BUTTONS) == RIGHT_BUTTON)
                 {
                     ucMessage = RIGHT_BUTTON;
-
+                    test_pos -= 50;
                     //
                     // Guard UART from concurrent access.
                     //

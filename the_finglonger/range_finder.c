@@ -5,13 +5,27 @@
  *      Author: Chris
  */
 
+#include "inc/hw_memmap.h"
+#include "inc/hw_types.h"
 
 #include "driverlib/gpio.h"
+#include "driverlib/pin_map.h"
 #include "inc/hw_timer.h"
 #include "driverlib/i2c.h"
 
-#define SONIC_TASK_DELAY (configTICK_RATE_HZ / 10)
+#include "driverlib/uart.h"
+#include "utils/uartstdio.h"
 
+#include "FreeRTOS.h"
+#include "task.h"
+#include "semphr.h"
+
+#include "defines.h"
+#include "priorities.h"
+#include "range_finder.h"
+#include "stepper_control.h"
+
+extern long global_x_accel;
 
 #if (RANGING_MODE == LASER_PWM) || (RANGING_MODE == ULTRASONIC_PWM)
 void EchoInterrupt()
@@ -38,6 +52,7 @@ void EchoInterrupt()
  * I2C_MASTER_ERR_NONE, I2C_MASTER_ERR_ADDR_ACK, I2C_MASTER_ERR_DATA_ACK, or
  * I2C_MASTER_ERR_ARB_LOST.
  */
+/*
 unsigned long WaitI2CDone( unsigned long ulBase)
 {
     // Wait until done transmitting
@@ -46,12 +61,118 @@ unsigned long WaitI2CDone( unsigned long ulBase)
     // Return I2C error code
     return I2CMasterErr( ulBase);
 }
+*/
 
-static void UltrasonicTask(void *pvParameters)
+#if RANGING_MODE == LASER_SPI
+
+static void SendLidarCommand(LIDAR_COMMAND cmd);
+static unsigned short LidarRead16(unsigned char addr);
+
+const unsigned char lidar_cmd_table[LIDAR_NUM_COMMANDS][2] =
+{
+		{ LIDAR_REG_CMD_CTRL, LIDAR_CMD_ACQ }
+};
+
+
+
+static void LaserSpiTask(void *pvParameters)
+{
+	portTickType	ulWakeTime;
+	unsigned long	range;
+
+	short 	old_target	= 0;
+	short	new_target	= 0;
+	short	speed		= MAX_STEP_PERIOD;
+
+	I2CMasterEnable			(I2C3_MASTER_BASE);
+
+	ulWakeTime = xTaskGetTickCount();
+	while(1)
+	{
+		//Issue command to take a simple range reading
+		SendLidarCommand(LIDAR_CMD_SIMPLE_RANGE);
+
+		vTaskDelay(100);
+
+		range = LidarRead16(LIDAR_REG16_DISTANCE);
+
+		if(range > 320)
+			range = 320;
+
+		//TODO: adjust min/max range based on inclination
+		/*
+		if(global_x_accel < 0)
+		{
+
+		}
+		*/
+
+		new_target = range * 5;
+
+		speed = abs(old_target - new_target);
+
+		SeekPos( new_target, speed );
+		old_target = new_target;
+
+
+#if ENABLE_DEBUG_UART_MSGS
+		//UARTprintf("\x1b[2J\x1b[1;1H%d\r", range );
+#endif
+
+		vTaskDelayUntil(&ulWakeTime, 100);
+	}
+}
+
+static void SendLidarCommand(LIDAR_COMMAND cmd)
+{
+	I2CMasterSlaveAddrSet( I2C3_MASTER_BASE, LIDAR_SPI_ADDR, false);   // false = write, true = read
+	I2CMasterDataPut( I2C3_MASTER_BASE, lidar_cmd_table[cmd][CMD_REG]);
+	I2CMasterControl( I2C3_MASTER_BASE, I2C_MASTER_CMD_BURST_SEND_START);
+	while( I2CMasterBusy(I2C3_MASTER_BASE))
+	    vTaskDelay(1);
+	I2CMasterDataPut( I2C3_MASTER_BASE, lidar_cmd_table[cmd][CMD_VAL]);
+	I2CMasterControl( I2C3_MASTER_BASE, I2C_MASTER_CMD_BURST_SEND_FINISH);
+	while( I2CMasterBusy(I2C3_MASTER_BASE))
+		vTaskDelay(1);
+}
+
+static unsigned short LidarRead16(unsigned char addr)
+{
+	unsigned short range;
+
+	I2CMasterSlaveAddrSet( I2C3_MASTER_BASE, LIDAR_SPI_ADDR, false);   // false = write, true = read
+	I2CMasterDataPut( I2C3_MASTER_BASE, addr );
+	I2CMasterControl( I2C3_MASTER_BASE, I2C_MASTER_CMD_SINGLE_SEND);
+
+	while( I2CMasterBusy(I2C3_MASTER_BASE))
+		vTaskDelay(1);
+
+	I2CMasterSlaveAddrSet( I2C3_MASTER_BASE, LIDAR_SPI_ADDR, true);   // false = write, true = read
+	I2CMasterControl( I2C3_MASTER_BASE, I2C_MASTER_CMD_BURST_RECEIVE_START);
+
+	while( I2CMasterBusy(I2C3_MASTER_BASE))
+		vTaskDelay(1);
+
+	range = I2CMasterDataGet(I2C3_MASTER_BASE) << 8;
+	I2CMasterControl( I2C3_MASTER_BASE, I2C_MASTER_CMD_BURST_RECEIVE_FINISH);
+
+	while( I2CMasterBusy(I2C3_MASTER_BASE))
+		vTaskDelay(1);
+
+	range |= I2CMasterDataGet(I2C3_MASTER_BASE);
+
+	return range;
+}
+
+#else
+
+static void RangeFinderTask(void *pvParameters)
 {
 	unsigned long distance;
 	unsigned long range;
 	unsigned long smoothed_distance = 100;
+	int err;
+	int id;
 
 	portTickType ulWakeTime;
 
@@ -63,7 +184,7 @@ static void UltrasonicTask(void *pvParameters)
 
 #if RANGING_MODE == LASER_SPI
 
-	I2CMasterEnable			(I2C3_MASTER_BASE);
+
 
 /*
 	I2CMasterSlaveAddrSet( I2C3_MASTER_BASE, (0xC4 / 2), false);   // false = write, true = read
@@ -101,6 +222,7 @@ static void UltrasonicTask(void *pvParameters)
 #endif
 
 	SysCtlDelay(10000);
+
 
 
 	ulWakeTime = xTaskGetTickCount();
@@ -245,4 +367,17 @@ static void UltrasonicTask(void *pvParameters)
 	#endif
 		vTaskDelayUntil(&ulWakeTime, /*SONIC_TASK_DELAY*/ 100  );
 	}
+}
+#endif
+
+unsigned long RangeFinderTaskInit(void)
+{
+#if RANGING_MODE == LASER_SPI
+	if(xTaskCreate(LaserSpiTask, (signed portCHAR *)"Range Finder", 256, NULL, tskIDLE_PRIORITY + PRIORITY_LINEAR_CONTROL_TASK, NULL) != pdTRUE)
+#else
+	 if(xTaskCreate(RangeFinderTask, (signed portCHAR *)"Range Finder", 256, NULL, tskIDLE_PRIORITY + PRIORITY_LINEAR_CONTROL_TASK, NULL) != pdTRUE)
+#endif
+		 return(1);
+
+	 return(0);
 }

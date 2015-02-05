@@ -22,29 +22,31 @@
 //
 //*****************************************************************************
 
+#include <stdlib.h>
+#include <string.h>
 #include "inc/hw_memmap.h"
 #include "inc/hw_types.h"
+#include "inc/hw_timer.h"
 #include "driverlib/gpio.h"
 #include "driverlib/pin_map.h"
 #include "driverlib/rom.h"
 #include "driverlib/sysctl.h"
 #include "driverlib/uart.h"
+#include "driverlib/i2c.h"
+#include "drivers/rgb.h"
 #include "utils/uartstdio.h"
+
+#include "defines.h"
 #include "led_task.h"
 #include "switch_task.h"
 #include "FreeRTOS.h"
 #include "task.h"
 #include "queue.h"
 #include "semphr.h"
+#include "priorities.h"
 #include "linear_controller_task.h"
 #include "stepper_control.h"
-
-#include "drivers/rgb.h"
-#include "inc/hw_timer.h"
-#include "priorities.h"
-#include <stdlib.h>
-#include <string.h>
-#include "driverlib/i2c.h"
+#include "range_finder.h"
 
 //*****************************************************************************
 //
@@ -153,16 +155,18 @@ main(void)
         while(1);
 #endif
 
-#if 1
+#if 0
     // Create the switch task.
     if(SwitchTaskInit() != 0)
         while(1);
 #endif
 
-#if 0
+#if (MOTOR_TYPE	== DC_SLIDE)
 	if(LinearControllerTaskInit() != 0)
-#else
+#elif (MOTOR_TYPE == STEPPER_SCREW)
 	if(StepperControllerTaskInit() != 0)
+#else
+#error "no motor type defined"
 #endif
 		while(1);
 
@@ -171,7 +175,11 @@ main(void)
 		while(1);
 
 
-#if 1
+	if(RangeFinderTaskInit() != 0)
+	        while(1);
+
+
+#if 0
 	if(xTaskCreate(ConsoleTask, (signed portCHAR *)"Console", 256, NULL, tskIDLE_PRIORITY + PRIORITY_CONSOLE_TASK, NULL) != pdTRUE)
 		while(1);
 #endif
@@ -185,7 +193,7 @@ main(void)
 }
 
 
-
+/*
 static void
 ConsoleTask(void *pvParameters)
 {
@@ -204,13 +212,15 @@ ConsoleTask(void *pvParameters)
 
 			if( (arg > 10) && (arg < 4000) )
 			{
-				target = arg;
+				//target = arg;
 			}
 		}
 
 
 	}
 }
+*/
+
 
 void HW_Init(void)
 {
@@ -295,8 +305,11 @@ void HW_Init(void)
 
 
 	//stepper driver pin configuration
-
-	GPIOPinTypeGPIOOutput(GPIO_PORTC_BASE, GPIO_PIN_4); //PC4 = stepper DIR
-	GPIOPinTypeGPIOOutput(GPIO_PORTC_BASE, GPIO_PIN_5); //PC5 = stepper STEP
-	GPIOPinTypeGPIOOutput(GPIO_PORTC_BASE, GPIO_PIN_6); //PC6 = stepper ENABLE_N
+	//PC4 = stepper DIR
+	//PC5 = stepper STEP
+	//PC6 = stepper ENABLE_N
+	//PD2 = stepper MODE0
+	//PD2 = stepper MODE1
+	GPIOPinTypeGPIOOutput(GPIO_PORTC_BASE, GPIO_PIN_4 | GPIO_PIN_5 | GPIO_PIN_6);
+	GPIOPinTypeGPIOOutput(GPIO_PORTD_BASE, GPIO_PIN_2 | GPIO_PIN_3);
 }
