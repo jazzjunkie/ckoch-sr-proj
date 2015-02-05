@@ -24,45 +24,65 @@ static unsigned short	step_period_ms;
 volatile unsigned char	step_toggle = 0;
 volatile unsigned short	current_pos	= 0;
 volatile unsigned short	target_pos	= 0;
-
 volatile unsigned short	step_count	= 0;
+
 char step_increment = 0;
+
 
 void StepTimerInterrupt(void)
 {
-    ROM_TimerIntClear(TIMER1_BASE, TIMER_TIMA_TIMEOUT);
-    GPIOPinWrite(GPIO_PORTC_BASE, GPIO_PIN_5, step_toggle);
-    step_toggle ^= GPIO_PIN_5;
+    //Check to see if we've unexpectedly run into the end of the slider.
+    //Stop moving, and update current_pos.
+    if( /* is limit switch 1 triggered? */ 0 && (step_increment > 0))
+    {
+    	current_pos = MAX_CARRIAGE_POS;
+    	step_count = 0;
+    }
+    else if( /* is limit switch 2 triggered? */ 0 && (step_increment < 0) )
+    {
+    	current_pos = MIN_CARRIAGE_POS;
+		step_count = 0;
+    }
+
 
     if( step_count )
     {
-    	current_pos += step_increment;
-    	--step_count;
+    	//step the motor
+    	GPIOPinWrite(GPIO_PORTC_BASE, GPIO_PIN_5, step_toggle);
+    	step_toggle ^= GPIO_PIN_5;
+
+    	if(step_toggle)
+    	{
+    		current_pos += step_increment;
+    		--step_count;
+    	}
     }
     else
     {
+    	//Done moving.
+    	//Turn off this interrupt routine and disable the output drivers.
     	TimerIntDisable(TIMER1_BASE, TIMER_TIMA_TIMEOUT);
+    	GPIOPinWrite(GPIO_PORTC_BASE, GPIO_PIN_6, GPIO_PIN_6);
     }
+
+    ROM_TimerIntClear(TIMER1_BASE, TIMER_TIMA_TIMEOUT);
 }
 
 
 void SeekPos( short target, short speed )
 {
 	//range-check target
-	if( (target >= 0) && (target < 1600) )
+	if( (target >= 0) && (target < ) )
 	{
+		//enable stepper driver
+		GPIOPinWrite(GPIO_PORTC_BASE, GPIO_PIN_6, 0);
+
+
 		if(current_pos == 0)
 			current_pos = target;
 
 		target_pos = target;
 
-		//range-check speed
-		/*
-		if(speed < MIN_STEP_PERIOD)
-			speed = MIN_STEP_PERIOD;
-		else if(speed < MAX_STEP_PERIOD)
-			speed = MAX_STEP_PERIOD;
-			*/
 
 		if(abs(target_pos - current_pos) < 50)
 			speed = 10;
